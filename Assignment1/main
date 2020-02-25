@@ -1,0 +1,99 @@
+import numpy as np
+import cv2 as cv
+from matplotlib import pyplot as plt
+from PIL import Image
+from pylab import *
+
+
+# Load a color image in grayscale
+img = cv.imread('lena512.bmp',0)
+
+# get dimensions of image
+dimensions = img.shape
+
+# height, width, number of channels in image
+height = img.shape[0]
+width = img.shape[1]
+
+print('Image Dimension    : ', dimensions)
+print('Image Height       : ', height)
+print('Image Width        : ', width)
+
+#finding the invert/ negetive of teh image
+cv.imshow("Pic", img)
+
+img_not = cv.bitwise_not(img)
+cv.imshow("Invert1", img_not)
+cv.waitKey(0)
+cv.destroyAllWindows()
+
+#histogram normalization:
+equ = cv.equalizeHist(img)
+# stacking images side-by-side
+res_for_normalization = np.hstack((img, equ))
+# show image input vs output
+cv.imshow('res_for_normalization.png', res_for_normalization)
+
+cv.waitKey(0)
+
+cv.destroyAllWindows()
+
+#equalization
+equ = cv.equalizeHist(img)
+res_for_equalization = np.hstack((img,equ))
+#stacking images side-by-side
+cv.imwrite('res_for_equalization.png',res_for_equalization)
+cv.imshow('res_for_equalization.png', res_for_normalization)
+cv.waitKey(0)
+
+cv.destroyAllWindows()
+
+#plotting histogram
+hist,bins = np.histogram(img.flatten(),256,[0,256])
+cdf = hist.cumsum()
+cdf_normalized = cdf * float(hist.max()) / cdf.max()
+plt.plot(cdf_normalized, color = 'b')
+plt.hist(img.flatten(),256,[0,256], color = 'r')
+plt.xlim([0,256])
+plt.legend(('cdf','histogram'), loc = 'upper left')
+plt.show()
+
+cdf_m = np.ma.masked_equal(cdf,0)
+cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
+cdf = np.ma.filled(cdf_m,0).astype('uint8')
+
+
+
+#part c
+
+lst = []
+for i in range(img.shape[0]):
+    for j in range(img.shape[1]):
+        lst.append(np.binary_repr(img[i][j], width=8))  # width = no. of bits
+
+# We have a list of strings where each string represents binary pixel value. To extract bit planes we need to iterate over the strings and store the characters corresponding to bit planes into lists.
+# Multiply with 2^(n-1) and reshape to reconstruct the bit image.
+eight_bit_img = (np.array([int(i[0]) for i in lst], dtype=np.uint8) * 128).reshape(img.shape[0], img.shape[1])
+seven_bit_img = (np.array([int(i[1]) for i in lst], dtype=np.uint8) * 64).reshape(img.shape[0], img.shape[1])
+six_bit_img = (np.array([int(i[2]) for i in lst], dtype=np.uint8) * 32).reshape(img.shape[0], img.shape[1])
+five_bit_img = (np.array([int(i[3]) for i in lst], dtype=np.uint8) * 16).reshape(img.shape[0], img.shape[1])
+four_bit_img = (np.array([int(i[4]) for i in lst], dtype=np.uint8) * 8).reshape(img.shape[0], img.shape[1])
+three_bit_img = (np.array([int(i[5]) for i in lst], dtype=np.uint8) * 4).reshape(img.shape[0], img.shape[1])
+two_bit_img = (np.array([int(i[6]) for i in lst], dtype=np.uint8) * 2).reshape(img.shape[0], img.shape[1])
+one_bit_img = (np.array([int(i[7]) for i in lst], dtype=np.uint8) * 1).reshape(img.shape[0], img.shape[1])
+
+# Concatenate these images for ease of display using cv2.hconcat()
+finalr = cv.hconcat([eight_bit_img, seven_bit_img, six_bit_img, five_bit_img])
+finalv = cv.hconcat([four_bit_img, three_bit_img, two_bit_img, one_bit_img])
+
+# Vertically concatenate
+final = cv.vconcat([finalr, finalv])
+
+# Display the images
+cv.imshow('a', final)
+cv.waitKey(0)
+# Combining 4 bit planes
+new_img = eight_bit_img+seven_bit_img+six_bit_img+five_bit_img
+# Display the image
+cv.imshow('a',new_img)
+cv.waitKey(0)
